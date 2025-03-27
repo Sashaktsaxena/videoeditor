@@ -24,15 +24,29 @@ interface MediaItemProps {
   onClick: () => void
   onDragEnd: (x: number, y: number) => void
   onResize: (width: number, height: number) => void
+  currentTime: number
+  isTimelinePlaying: boolean
+  restartTimer?: () => void
 }
 
-export default function MediaItem({ element, isSelected, isVisible, onClick, onDragEnd, onResize }: MediaItemProps) {
+export default function MediaItem({
+  element,
+  isSelected,
+  isVisible,
+  onClick,
+  onDragEnd,
+  onResize,
+  currentTime,
+  isTimelinePlaying,
+  restartTimer,
+}: MediaItemProps) {
   const [isDragging, setIsDragging] = useState(false)
   const [isResizing, setIsResizing] = useState(false)
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
   const [position, setPosition] = useState({ x: element.x, y: element.y })
   const [dimensions, setDimensions] = useState({ width: element.width, height: element.height })
   const elementRef = useRef<HTMLDivElement>(null)
+  const videoRef = useRef<HTMLVideoElement>(null)
 
   // Update position when element props change
   useEffect(() => {
@@ -90,6 +104,8 @@ export default function MediaItem({ element, isSelected, isVisible, onClick, onD
       if (isResizing) {
         onResize(dimensions.width, dimensions.height)
         setIsResizing(false)
+        // Restart timer if it was not running
+        restartTimer?.()
       }
     }
 
@@ -102,7 +118,33 @@ export default function MediaItem({ element, isSelected, isVisible, onClick, onD
       document.removeEventListener("mousemove", handleMouseMove)
       document.removeEventListener("mouseup", handleMouseUp)
     }
-  }, [isDragging, isResizing, dragOffset, position, dimensions, onDragEnd, onResize])
+  }, [isDragging, isResizing, dragOffset, position, dimensions, onDragEnd, onResize, restartTimer])
+
+  // Control video playback based on timeline state
+  useEffect(() => {
+    if (element.type !== "video" || !videoRef.current) return
+
+    if (isVisible && isTimelinePlaying) {
+      // Only play if the video is visible and the timeline is playing
+      videoRef.current.play().catch((err) => console.error("Video play error:", err))
+    } else {
+      // Pause in all other cases
+      videoRef.current.pause()
+    }
+  }, [isVisible, isTimelinePlaying, element.type, currentTime])
+
+  // Update video position when timeline changes
+  useEffect(() => {
+    if (element.type !== "video" || !videoRef.current || !isVisible) return
+
+    // Calculate the video's current time relative to its start time in the timeline
+    const videoTime = Math.max(0, currentTime - element.startTime)
+
+    // Only set currentTime if it's different enough to avoid unnecessary updates
+    if (Math.abs(videoRef.current.currentTime - videoTime) > 0.2) {
+      videoRef.current.currentTime = videoTime
+    }
+  }, [currentTime, element.startTime, element.type, isVisible])
 
   if (!isVisible) {
     return null
@@ -121,6 +163,7 @@ export default function MediaItem({ element, isSelected, isVisible, onClick, onD
       }}
       onMouseDown={handleMouseDown}
       onClick={onClick}
+      data-media-id={element.id}
     >
       {element.type === "image" ? (
         <img
@@ -130,7 +173,7 @@ export default function MediaItem({ element, isSelected, isVisible, onClick, onD
           draggable={false}
         />
       ) : (
-        <video src={element.src} className="w-full h-full object-cover" autoPlay={false} loop muted />
+        <video ref={videoRef} src={element.src} className="w-full h-full object-cover" muted playsInline />
       )}
 
       {/* Resize handle */}
@@ -143,4 +186,3 @@ export default function MediaItem({ element, isSelected, isVisible, onClick, onD
     </div>
   )
 }
-

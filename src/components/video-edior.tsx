@@ -83,23 +83,29 @@ export default function VideoEditor() {
         clearInterval(timerRef.current)
         timerRef.current = null
       }
+      setIsPlaying(false)
     } else {
-      timerRef.current = setInterval(() => {
-        setCurrentTime((prev) => {
-          const newTime = prev + 0.1
-          if (newTime >= duration) {
-            if (timerRef.current) {
-              clearInterval(timerRef.current)
-              timerRef.current = null
-            }
-            setIsPlaying(false)
-            return 0
-          }
-          return newTime
-        })
-      }, 100)
+      startPlaybackTimer()
     }
-    setIsPlaying(!isPlaying)
+  }
+
+  // Start playback timer (extracted to a separate function)
+  const startPlaybackTimer = () => {
+    timerRef.current = setInterval(() => {
+      setCurrentTime((prev) => {
+        const newTime = prev + 0.1
+        if (newTime >= duration) {
+          if (timerRef.current) {
+            clearInterval(timerRef.current)
+            timerRef.current = null
+          }
+          setIsPlaying(false)
+          return 0
+        }
+        return newTime
+      })
+    }, 100)
+    setIsPlaying(true)
   }
 
   // Reset playback
@@ -249,6 +255,10 @@ export default function VideoEditor() {
                 updateMediaProperty(element.id, "width", width)
                 updateMediaProperty(element.id, "height", height)
               }}
+              currentTime={currentTime}
+              isTimelinePlaying={isPlaying}
+              // Add a prop to restart the timer if it's not running
+              restartTimer={isPlaying ? undefined : startPlaybackTimer}
             />
           ))}
         </div>
@@ -298,4 +308,3 @@ export default function VideoEditor() {
     </div>
   )
 }
-
