@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+import Image from "next/image"
 
 import { useState, useRef, useEffect } from "react"
 import { cn } from "@/lib/utils"
@@ -166,10 +167,11 @@ export default function MediaItem({
       data-media-id={element.id}
     >
       {element.type === "image" ? (
-        <img
+        <Image
           src={element.src || "/placeholder.svg"}
           alt="Media"
-          className="w-full h-full object-cover"
+          fill
+          className="object-cover"
           draggable={false}
         />
       ) : (

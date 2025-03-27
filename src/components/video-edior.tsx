@@ -27,7 +27,7 @@ export default function VideoEditor() {
   const [selectedElement, setSelectedElement] = useState<string | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
-  const [duration, setDuration] = useState(60) // Default 60 seconds timeline
+  const [duration] = useState(60) // Default 60 seconds timeline
   const fileInputRef = useRef<HTMLInputElement>(null)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -72,7 +72,7 @@ export default function VideoEditor() {
   }
 
   // Update media properties
-  const updateMediaProperty = (id: string, property: keyof MediaElement, value: any) => {
+  const updateMediaProperty = (id: string, property: keyof MediaElement, value: unknown) => {
     setMediaElements((prev) => prev.map((element) => (element.id === id ? { ...element, [property]: value } : element)))
   }
 
@@ -257,7 +257,7 @@ export default function VideoEditor() {
               }}
               currentTime={currentTime}
               isTimelinePlaying={isPlaying}
-              // Add a prop to restart the timer if it's not running
+              // Add a prop to restart the timer if it was not running
               restartTimer={isPlaying ? undefined : startPlaybackTimer}
             />
           ))}
